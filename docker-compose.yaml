@@ -1,0 +1,128 @@
+services:
+  traefik:
+    image: traefik:v3.3.3
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:${API_GATEWAY_PORT}"
+    ports:
+      - "${API_GATEWAY_PORT}:${API_GATEWAY_PORT}"
+      - ${TRAEFIK_DASHBOARD_EXTERNAL_PORT}:${TRAEFIK_DASHBOARD_INTERNAL_PORT}
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    labels:
+      - "traefik.enable=true"
+
+      # API Gateway main route
+      - "traefik.http.routers.api-gateway.rule=Host(`localhost`)"
+      - "traefik.http.routers.api-gateway.entrypoints=web"
+      - "traefik.http.services.api-gateway.loadbalancer.server.port=3000"
+
+      # Swagger routing
+      - "traefik.http.routers.api-gateway-swagger.rule=Host(`localhost`) && PathPrefix(`/api-docs`)"
+      - "traefik.http.routers.api-gateway-swagger.entrypoints=web"
+      - "traefik.http.routers.api-gateway-swagger.service=api-gateway"
+
+  auth-service:
+    build: ./services/auth-service
+    container_name: auth-service
+    depends_on:
+      - mongodb_auth_service
+    environment:
+      - PROJECT_NAME="Auth Service for Mindset Institute Microservices Project"
+      - PORT=${AUTH_SERVICE_PORT}
+      - TOKEN_EXPIRES=5h
+      - JWT_SECRET="bazenS3cr3tkey0lusturursun!"
+      - DB_URI=mongodb://mongodb_auth_service:${MONGODB_AUTH_SERVICE_INTERNAL_PORT}/${MONGODB_AUTH_SERVICE_DATABASE}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.auth-service.rule=Host(`localhost`) && PathPrefix(`/auth`)"
+      - "traefik.http.routers.auth-service.entrypoints=web"
+      - "traefik.http.routers.auth-service.middlewares=auth-strip"
+      - "traefik.http.middlewares.auth-strip.stripprefix.prefixes=/auth"
+      - "traefik.http.services.auth-service.loadbalancer.server.port=3001"
+
+  customer-service:
+    build: ./services/customer-service
+    container_name: customer-service
+    depends_on:
+      - mongodb_customer_service
+    environment:
+      - PROJECT_NAME="Customer Service for Mindset Institute Microservices Project"
+      - PORT=3002
+      - DB_URI=mongodb://mongodb_customer_service:${MONGODB_CUSTOMER_SERVICE_INTERNAL_PORT}/${MONGODB_CUSTOMER_SERVICE_DATABASE}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.customer-service.rule=Host(`localhost`) && PathPrefix(`/customers`)"
+      - "traefik.http.routers.customer-service.entrypoints=web"
+      - "traefik.http.routers.customer-service.middlewares=jwt-auth"
+      - "traefik.http.middlewares.jwt-auth.forwardauth.address=http://auth-service:${AUTH_SERVICE_PORT}/validate"
+      - "traefik.http.middlewares.jwt-auth.forwardauth.authResponseHeaders=X-User,X-Role"
+      - "traefik.http.services.customer-service-service.loadbalancer.server.port=3002"
+
+  sales-service:
+    build: ./services/sales-service
+    container_name: sales-service
+    depends_on:
+      - mongodb_sales_service
+    environment:
+      - PROJECT_NAME="Sales Service for Mindset Institute Microservices Project"
+      - PORT=3003
+      - DB_URI=mongodb://mongodb_sales_service:${MONGODB_SALES_SERVICE_INTERNAL_PORT}/${MONGODB_SALES_SERVICE_DATABASE}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sales-service.rule=Host(`localhost`) && PathPrefix(`/sales`)"
+      - "traefik.http.routers.sales-service.entrypoints=web"
+      - "traefik.http.routers.sales-service.middlewares=jwt-auth"
+      - "traefik.http.middlewares.jwt-auth.forwardauth.address=http://auth-service:${AUTH_SERVICE_PORT}/validate"
+      - "traefik.http.middlewares.jwt-auth.forwardauth.authResponseHeaders=X-User,X-Role"
+      - "traefik.http.services.sales-service.loadbalancer.server.port=3003"
+
+  mongodb_auth_service:
+    image: mongo:latest
+    container_name: mongodb_auth_service
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_AUTH_SERVICE_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_AUTH_SERVICE_PASSWORD}
+      - MONGO_INITDB_DATABASE=${MONGODB_AUTH_SERVICE_DATABASE}
+    ports:
+      - ${MONGODB_AUTH_SERVICE_EXTERNAL_PORT}:${MONGODB_AUTH_SERVICE_INTERNAL_PORT}
+    volumes:
+      - mongodb_auth_data:/data/db
+    restart: always
+
+  mongodb_customer_service:
+    image: mongo:latest
+    container_name: mongodb_customer_service
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_CUSTOMER_SERVICE_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_CUSTOMER_SERVICE_PASSWORD}
+      - MONGO_INITDB_DATABASE=${MONGODB_CUSTOMER_SERVICE_DATABASE}
+    ports:
+      - ${MONGODB_CUSTOMER_SERVICE_EXTERNAL_PORT}:${MONGODB_CUSTOMER_SERVICE_INTERNAL_PORT}
+    volumes:
+      - mongodb_customer_data:/data/db
+    restart: always
+
+  mongodb_sales_service:
+    image: mongo:latest
+    container_name: mongodb_sales_service
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_SALES_SERVICE_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_SALES_SERVICE_PASSWORD}
+      - MONGO_INITDB_DATABASE=${MONGODB_SALES_SERVICE_DATABASE}
+    ports:
+      - ${MONGODB_SALES_SERVICE_EXTERNAL_PORT}:${MONGODB_SALES_SERVICE_INTERNAL_PORT}
+    volumes:
+      - mongodb_sales_data:/data/db
+    restart: always
+
+volumes:
+  mongodb_auth_data:
+  mongodb_customer_data:
+  mongodb_sales_data:
