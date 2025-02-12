@@ -7,9 +7,9 @@ const PORT = process.env.PORT;
 
 // Urls of Microservices Swagger JSON files
 const services = [
-    { name: "Auth Service", url: `http://auth-service:${process.env.AUTH_SERVICE_PORT}/swagger.json` },
-    { name: "Customer Service", url: `http://customer-service:${process.env.CUSTOMER_SERVICE_PORT}/swagger.json`},
-    { name: "Sales Service", url: `http://sales-service:${process.env.SALES_SERVICE_PORT}/swagger.json` }
+    { name: "Auth Service", url: `http://auth-service:${process.env.AUTH_SERVICE_PORT}/auth/swagger.json` },
+    { name: "Customer Service", url: `http://customer-service:${process.env.CUSTOMER_SERVICE_PORT}/customers/swagger.json`},
+    { name: "Sales Service", url: `http://sales-service:${process.env.SALES_SERVICE_PORT}/sales/swagger.json` }
 ];
 
 // Swagger JSON files are aggregated
