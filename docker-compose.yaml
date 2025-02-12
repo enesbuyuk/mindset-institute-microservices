@@ -8,9 +8,9 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf.template:ro
     environment:
       - SWAGGER_SERVICE_PORT=${SWAGGER_SERVICE_PORT}
-      - AUTH_SERVICE_PORT=3001
-      - CUSTOMER_SERVICE_PORT=3002
-      - SALES_SERVICE_PORT=3003
+      - AUTH_SERVICE_PORT=${AUTH_SERVICE_PORT}
+      - CUSTOMER_SERVICE_PORT=${CUSTOMER_SERVICE_PORT}
+      - SALES_SERVICE_PORT=${SALES_SERVICE_PORT}
       - NGINX_PORT=${NGINX_PORT}
     command: /bin/sh -c "envsubst '$$AUTH_SERVICE_PORT $$CUSTOMER_SERVICE_PORT $$SALES_SERVICE_PORT $$SWAGGER_SERVICE_PORT $$NGINX_PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
     depends_on:
@@ -24,7 +24,7 @@ services:
     ports:
       - "${SWAGGER_SERVICE_PORT}:${SWAGGER_SERVICE_PORT}"
     environment:
-      - PORT=${API_GATEWAY_PORT}
+      - PORT=${SWAGGER_SERVICE_PORT}
       - AUTH_SERVICE_PORT=${AUTH_SERVICE_PORT}
       - CUSTOMER_SERVICE_PORT=${CUSTOMER_SERVICE_PORT}
       - SALES_SERVICE_PORT=${SALES_SERVICE_PORT}
