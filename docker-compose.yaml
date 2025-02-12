@@ -1,92 +1,71 @@
 services:
-  traefik:
-    image: traefik:v3.3.3
-    container_name: traefik
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--entrypoints.web.address=:${API_GATEWAY_PORT}"
+  nginx:
+    image: nginx:latest
+    container_name: nginx
     ports:
-      - "${API_GATEWAY_PORT}:${API_GATEWAY_PORT}"
-      - "${TRAEFIK_DASHBOARD_EXTERNAL_PORT}:${TRAEFIK_DASHBOARD_INTERNAL_PORT}"
+      - "${NGINX_PORT}:${NGINX_PORT}"
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - ./nginx.conf:/etc/nginx/nginx.conf.template:ro
+    environment:
+      - SWAGGER_SERVICE_PORT=${SWAGGER_SERVICE_PORT}
+      - AUTH_SERVICE_PORT=3001
+      - CUSTOMER_SERVICE_PORT=3002
+      - SALES_SERVICE_PORT=3003
+      - NGINX_PORT=${NGINX_PORT}
+    command: /bin/sh -c "envsubst '$$AUTH_SERVICE_PORT $$CUSTOMER_SERVICE_PORT $$SALES_SERVICE_PORT $$SWAGGER_SERVICE_PORT $$NGINX_PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
+    depends_on:
+      - auth-service
+      - customer-service
+      - sales-service
 
-  api-gateway:
-    build: ./api-gateway
-    container_name: api-gateway
+  swagger-service:
+    build: ./services/swagger-service
+    container_name: swagger-service
+    ports:
+      - "${SWAGGER_SERVICE_PORT}:${SWAGGER_SERVICE_PORT}"
     environment:
       - PORT=${API_GATEWAY_PORT}
       - AUTH_SERVICE_PORT=${AUTH_SERVICE_PORT}
       - CUSTOMER_SERVICE_PORT=${CUSTOMER_SERVICE_PORT}
       - SALES_SERVICE_PORT=${SALES_SERVICE_PORT}
-    labels:
-      - "traefik.enable=true"
-
-      # API Gateway main route
-      - "traefik.http.routers.api-gateway.rule=Host(`localhost`)"
-      - "traefik.http.routers.api-gateway.entrypoints=web"
-      - "traefik.http.services.api-gateway.loadbalancer.server.port=${API_GATEWAY_PORT}"
-
-      # Swagger routing
-      - "traefik.http.routers.api-gateway-swagger.rule=Host(`localhost`) && PathPrefix(`/api-docs`)"
-      - "traefik.http.routers.api-gateway-swagger.entrypoints=web"
-      - "traefik.http.routers.api-gateway-swagger.service=api-gateway"
 
   auth-service:
     build: ./services/auth-service
     container_name: auth-service
+    ports:
+      - "${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}"
     depends_on:
       - mongodb_auth_service
     environment:
       - PROJECT_NAME="Auth Service for Mindset Institute Microservices Project"
       - PORT=${AUTH_SERVICE_PORT}
       - TOKEN_EXPIRES=5h
-      - JWT_SECRET="bazenS3cr3tkey0lusturursun!"
-      - DB_URI=mongodb://mongodb_auth_service:${MONGODB_AUTH_SERVICE_INTERNAL_PORT}/${MONGODB_AUTH_SERVICE_DATABASE}
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.auth-service.rule=Host(`localhost`) && PathPrefix(`/auth`)"
-      - "traefik.http.routers.auth-service.entrypoints=web"
-      - "traefik.http.routers.auth-service.middlewares=auth-strip"
-      - "traefik.http.middlewares.auth-strip.stripprefix.prefixes=/auth"
-      - "traefik.http.services.auth-service.loadbalancer.server.port=${AUTH_SERVICE_PORT}"
+      - JWT_SECRET=${JWT_SECRET_KEY}
+      - DB_URI=mongodb://${MONGODB_AUTH_SERVICE_USERNAME}:${MONGODB_AUTH_SERVICE_PASSWORD}@mongodb_auth_service:${MONGODB_AUTH_SERVICE_INTERNAL_PORT}/${MONGODB_AUTH_SERVICE_DATABASE}?authSource=admin
 
   customer-service:
     build: ./services/customer-service
     container_name: customer-service
+    ports:
+      - "${CUSTOMER_SERVICE_PORT}:${CUSTOMER_SERVICE_PORT}"
     depends_on:
       - mongodb_customer_service
     environment:
       - PROJECT_NAME="Customer Service for Mindset Institute Microservices Project"
-      - PORT=3002
-      - DB_URI=mongodb://mongodb_customer_service:${MONGODB_CUSTOMER_SERVICE_INTERNAL_PORT}/${MONGODB_CUSTOMER_SERVICE_DATABASE}
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.customer-service.rule=Host(`localhost`) && PathPrefix(`/customers`)"
-      - "traefik.http.routers.customer-service.entrypoints=web"
-      - "traefik.http.routers.customer-service.middlewares=jwt-auth"
-      - "traefik.http.middlewares.jwt-auth.forwardauth.address=http://localhost:${API_GATEWAY_PORT}}/auth/validate"
-      - "traefik.http.middlewares.jwt-auth.forwardauth.authResponseHeaders=X-User,X-Role"
-      - "traefik.http.services.customer-service-service.loadbalancer.server.port=${CUSTOMER_SERVICE_PORT}"
+      - PORT=${CUSTOMER_SERVICE_PORT}
+      - DB_URI=mongodb://${MONGODB_CUSTOMER_SERVICE_USERNAME}:${MONGODB_CUSTOMER_SERVICE_PASSWORD}@mongodb_customer_service:${MONGODB_CUSTOMER_SERVICE_INTERNAL_PORT}/${MONGODB_CUSTOMER_SERVICE_DATABASE}?authSource=admin
 
   sales-service:
     build: ./services/sales-service
     container_name: sales-service
+    ports:
+      - "${SALES_SERVICE_PORT}:${SALES_SERVICE_PORT}"
     depends_on:
       - mongodb_sales_service
     environment:
       - PROJECT_NAME="Sales Service for Mindset Institute Microservices Project"
-      - PORT=3003
-      - DB_URI=mongodb://mongodb_sales_service:${MONGODB_SALES_SERVICE_INTERNAL_PORT}/${MONGODB_SALES_SERVICE_DATABASE}
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.sales-service.rule=Host(`localhost`) && PathPrefix(`/sales`)"
-      - "traefik.http.routers.sales-service.entrypoints=web"
-      - "traefik.http.routers.sales-service.middlewares=jwt-auth"
-      - "traefik.http.middlewares.jwt-auth.forwardauth.address=http://localhost:${API_GATEWAY_PORT}}/auth/validate"
-      - "traefik.http.middlewares.jwt-auth.forwardauth.authResponseHeaders=X-User,X-Role"
-      - "traefik.http.services.sales-service.loadbalancer.server.port=${SALES_SERVICE_PORT}"
+      - PORT=${SALES_SERVICE_PORT}
+      - DB_URI=mongodb://${MONGODB_SALES_SERVICE_USERNAME}:${MONGODB_SALES_SERVICE_PASSWORD}@mongodb_sales_service:${MONGODB_SALES_SERVICE_INTERNAL_PORT}/${MONGODB_SALES_SERVICE_DATABASE}?authSource=admin
 
   mongodb_auth_service:
     image: mongo:latest
@@ -96,10 +75,10 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_AUTH_SERVICE_PASSWORD}
       - MONGO_INITDB_DATABASE=${MONGODB_AUTH_SERVICE_DATABASE}
     ports:
-      - ${MONGODB_AUTH_SERVICE_EXTERNAL_PORT}:${MONGODB_AUTH_SERVICE_INTERNAL_PORT}
+      - "${MONGODB_AUTH_SERVICE_EXTERNAL_PORT}:${MONGODB_AUTH_SERVICE_INTERNAL_PORT}"
     volumes:
       - mongodb_auth_data:/data/db
-    restart: always
+    restart: unless-stopped
 
   mongodb_customer_service:
     image: mongo:latest
@@ -109,10 +88,10 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_CUSTOMER_SERVICE_PASSWORD}
       - MONGO_INITDB_DATABASE=${MONGODB_CUSTOMER_SERVICE_DATABASE}
     ports:
-      - ${MONGODB_CUSTOMER_SERVICE_EXTERNAL_PORT}:${MONGODB_CUSTOMER_SERVICE_INTERNAL_PORT}
+      - "${MONGODB_CUSTOMER_SERVICE_EXTERNAL_PORT}:${MONGODB_CUSTOMER_SERVICE_INTERNAL_PORT}"
     volumes:
       - mongodb_customer_data:/data/db
-    restart: always
+    restart: unless-stopped
 
   mongodb_sales_service:
     image: mongo:latest
@@ -122,10 +101,10 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_SALES_SERVICE_PASSWORD}
       - MONGO_INITDB_DATABASE=${MONGODB_SALES_SERVICE_DATABASE}
     ports:
-      - ${MONGODB_SALES_SERVICE_EXTERNAL_PORT}:${MONGODB_SALES_SERVICE_INTERNAL_PORT}
+      - "${MONGODB_SALES_SERVICE_EXTERNAL_PORT}:${MONGODB_SALES_SERVICE_INTERNAL_PORT}"
     volumes:
       - mongodb_sales_data:/data/db
-    restart: always
+    restart: unless-stopped
 
 volumes:
   mongodb_auth_data:

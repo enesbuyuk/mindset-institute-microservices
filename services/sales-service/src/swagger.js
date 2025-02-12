@@ -14,7 +14,7 @@ const options = {
         },
         servers: [
             {
-                url: `http://0.0.0.0:${process.env.PORT}`,
+                url: `http://localhost:${process.env.PORT}`,
                 description: "Docker container for this service",
             },
         ],

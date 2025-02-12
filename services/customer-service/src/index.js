@@ -16,7 +16,7 @@ app.use(express.json());
 setupSwagger(app);
 
 // Routes
-app.use('/', customerRoutes);
+app.use('/customers', customerRoutes);
 
 mongoose.connect(process.env.DB_URI)
     .then(() => {

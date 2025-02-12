@@ -19,7 +19,7 @@ app.use(cors());
 setupSwagger(app);
 
 // Routes
-app.use('/', authRoutes);
+app.use('/auth', authRoutes);
 
 mongoose.connect(process.env.DB_URI)
     .then(() => {

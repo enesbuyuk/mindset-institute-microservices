@@ -5,11 +5,11 @@ const axios = require('axios');
 const app = express();
 const PORT = process.env.PORT;
 
-// Mikroservislerin Swagger JSON URL'leri
+// Urls of Microservices Swagger JSON files
 const services = [
     { name: "Auth Service", url: `http://auth-service:${process.env.AUTH_SERVICE_PORT}/swagger.json` },
-    { name: "Customer Service", url: "http://customer-service:${process.env.CUSTOMER_SERVICE_PORT}/swagger.json"},
-    { name: "Sales Service", url: "http://sales-service:${process.env.SALES_SERVICE_PORT}/swagger.json" }
+    { name: "Customer Service", url: `http://customer-service:${process.env.CUSTOMER_SERVICE_PORT}/swagger.json`},
+    { name: "Sales Service", url: `http://sales-service:${process.env.SALES_SERVICE_PORT}/swagger.json` }
 ];
 
 // Swagger JSON files are aggregated
@@ -56,11 +56,11 @@ async function getAggregatedDocs() {
         paths,
         components: {
             schemas: definitions,
-            securitySchemes, // JWT token doğrulaması da ekleniyor
+            securitySchemes,
         },
         security: [
             {
-                BearerAuth: []  // Burada JWT doğrulaması yapılacak
+                BearerAuth: []
             }
         ],
         tags
