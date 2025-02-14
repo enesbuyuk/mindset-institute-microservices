@@ -21,8 +21,6 @@ services:
   swagger-service:
     build: ./services/swagger-service
     container_name: swagger-service
-    ports:
-      - "${SWAGGER_SERVICE_PORT}:${SWAGGER_SERVICE_PORT}"
     environment:
       - PORT=${SWAGGER_SERVICE_PORT}
       - AUTH_SERVICE_PORT=${AUTH_SERVICE_PORT}
@@ -32,8 +30,6 @@ services:
   auth-service:
     build: ./services/auth-service
     container_name: auth-service
-    ports:
-      - "${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}"
     depends_on:
       - mongodb_auth_service
     environment:
@@ -46,8 +42,6 @@ services:
   customer-service:
     build: ./services/customer-service
     container_name: customer-service
-    ports:
-      - "${CUSTOMER_SERVICE_PORT}:${CUSTOMER_SERVICE_PORT}"
     depends_on:
       - mongodb_customer_service
     environment:
@@ -58,8 +52,6 @@ services:
   sales-service:
     build: ./services/sales-service
     container_name: sales-service
-    ports:
-      - "${SALES_SERVICE_PORT}:${SALES_SERVICE_PORT}"
     depends_on:
       - mongodb_sales_service
     environment:
