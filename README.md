@@ -4,6 +4,76 @@
 ## Overview
 This project follows a microservices architecture with multiple services running in isolated containers. It uses Nginx as the API Gateway and integrates multiple microservices with separate databases.
 
+## Directory Structure
+```plaintext
+Directory structure:
+└── enesbuyuk-mindset-institute-microservices/
+    ├── README.md
+    ├── LICENSE
+    ├── docker-compose.yaml
+    ├── nginx.conf
+    ├── documents/
+    └── services/
+        ├── auth-service/
+        │   ├── Dockerfile
+        │   ├── package-lock.json
+        │   ├── package.json
+        │   ├── .dockerignore
+        │   ├── __tests__/
+        │   │   ├── authController.test.js
+        │   │   └── userModel.test.js
+        │   └── src/
+        │       ├── index.js
+        │       ├── swagger.js
+        │       ├── controllers/
+        │       │   └── authController.js
+        │       ├── models/
+        │       │   └── userModel.js
+        │       ├── routes/
+        │       │   └── authRoutes.js
+        │       └── services/
+        │           └── authService.js
+        ├── customer-service/
+        │   ├── Dockerfile
+        │   ├── package-lock.json
+        │   ├── package.json
+        │   ├── __tests__/
+        │   │   ├── customerController.test.js
+        │   │   └── customerModel.test.js
+        │   └── src/
+        │       ├── index.js
+        │       ├── swagger.js
+        │       ├── controllers/
+        │       │   └── customerController.js
+        │       ├── models/
+        │       │   └── customerModel.js
+        │       └── routes/
+        │           └── customerRoutes.js
+        ├── sales-service/
+        │   ├── Dockerfile
+        │   ├── package-lock.json
+        │   ├── package.json
+        │   ├── .dockerignore
+        │   ├── __tests__/
+        │   │   ├── salesController.test.js
+        │   │   └── salesModel.test.js
+        │   └── src/
+        │       ├── index.js
+        │       ├── swagger.js
+        │       ├── controllers/
+        │       │   └── salesController.js
+        │       ├── models/
+        │       │   └── salesModel.js
+        │       └── routes/
+        │           └── salesRoutes.js
+        └── swagger-service/
+            ├── Dockerfile
+            ├── index.js
+            ├── package-lock.json
+            ├── package.json
+            └── .dockerignore
+```
+
 ## Features
 - API Gateway with Nginx
 - Authentication Service with JWT support
