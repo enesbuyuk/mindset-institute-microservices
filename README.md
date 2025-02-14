@@ -10,7 +10,7 @@ Directory structure:
 └── enesbuyuk-mindset-institute-microservices/
     ├── README.md
     ├── LICENSE
-    ├── docker-compose.yaml
+    ├── docker compose.yaml
     ├── nginx.conf
     ├── documents/
     └── services/
@@ -100,14 +100,14 @@ Modify the `.env` file in the root directory to set up the necessary environment
 ### Running the Services
 To start all services using Docker Compose, run:
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 This command will start the API Gateway, microservices, and databases.
 
 ### Stopping the Services
 To stop the services, run:
 ```bash
-docker-compose down
+docker compose down
 ```
 
 ## Swagger API Documentation (Aggregated Swagger Documentation)
