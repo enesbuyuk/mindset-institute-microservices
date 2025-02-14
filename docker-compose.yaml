@@ -39,7 +39,7 @@ services:
     environment:
       - PROJECT_NAME="Auth Service for Mindset Institute Microservices Project"
       - PORT=${AUTH_SERVICE_PORT}
-      - TOKEN_EXPIRES=5h
+      - JWT_EXPIRES=${JWT_EXPIRATION_TIME}
       - JWT_SECRET=${JWT_SECRET_KEY}
       - DB_URI=mongodb://${MONGODB_AUTH_SERVICE_USERNAME}:${MONGODB_AUTH_SERVICE_PASSWORD}@mongodb_auth_service:${MONGODB_AUTH_SERVICE_INTERNAL_PORT}/${MONGODB_AUTH_SERVICE_DATABASE}?authSource=admin
 
