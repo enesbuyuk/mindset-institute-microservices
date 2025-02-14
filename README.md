@@ -57,6 +57,6 @@ npm test
 Contributions are welcome! Please follow the guidelines in `CONTRIBUTING.md`.
 
 ## License
-This project is licensed under the MIT License.
+This project is licensed under GPL-3.0 License. See the [LICENSE](https://github.com/enesbuyuk/mindset-institute-microservices?tab=GPL-3.0-1-ov-file) file for details.
 
 For any inquiries, contact: [contact@enesbuyuk.com](mailto:contact@enesbuyuk.com)
