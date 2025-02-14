@@ -1,6 +1,8 @@
 const express = require('express');
 const authController = require('../controllers/authController');
 const {swaggerSpec} = require('../swagger')
+const {verify} = require("jsonwebtoken");
+const User = require("../models/userModel");
 const router = express.Router();
 
 
@@ -206,32 +208,61 @@ router.post('/login', authController.login);
  * /auth/validate:
  *   get:
  *     summary: Validate user authentication
+ *     description: Checks if the provided token is valid and returns user role and username.
  *     tags: [Auth]
  *     security:
- *       - bearerAuth: []
+ *       - bearerAuth: []  # Only for the /auth/validate endpoint
  *     responses:
  *       200:
  *         description: Token is valid
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Token is valid"
+ *                 username:
+ *                   type: string
+ *                   example: "johndoe123"
+ *                 role:
+ *                   type: string
+ *                   example: "user"
  *       401:
  *         description: Unauthorized or Invalid Token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Unauthorized"
  */
-router.get("/validate", (req, res) => {
-    const authHeader = req.headers["authorization"];
-
-    if (!authHeader) {
-        return res.status(401).send("Unauthorized");
-    }
-
-    const token = authHeader.split(" ")[1];
-
-    jwt.verify(token, SECRET_KEY, (err, user) => {
-        if (err) {
-            return res.status(401).send("Invalid Token");
+router.get("/validate", async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({ message: "No token provided" });
         }
+
+        const token = authHeader.split(" ")[1];
+        const decoded = verify(token, process.env.JWT_SECRET);
+
+        const user = await User.findById(decoded.userId);
+        if (!user) {
+            return res.status(401).json({ message: "User not found" });
+        }
+
         res.setHeader("X-User", user.username);
         res.setHeader("X-Role", user.role);
-        res.status(200).send("OK");
-    });
+
+        return res.status(200).json({ message: "Token is valid", username: user.username, role: user.role });
+    } catch (error) {
+        console.error("JWT Validation Error:", error.message);
+        return res.status(401).json({ message: "Invalid or expired token", error: error.message });
+    }
 });
 
 module.exports = router;
